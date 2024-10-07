@@ -1,0 +1,3 @@
+id,genus,species,strain,taxonomy,genome_filename
+ECOL1,Escherichia,coli,K-12,Bacteria;Proteobacteria;Gammaproteobacteria,e_coli_genome.fasta
+BSUB1,Bacillus,subtilis,168,Bacteria;Firmicutes;Bacilli,b_subtilis_genome.fasta

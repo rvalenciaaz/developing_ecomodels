@@ -58,21 +58,12 @@ def create_simulation_results_table(cursor):
         method_label TEXT,
         results_filename TEXT,
         plot_filename TEXT,
+        dt REAL,  -- Time step (dt)
+        n_steps INTEGER,  -- Number of steps (n_steps)
         FOREIGN KEY(simulation_id) REFERENCES simulations(simulation_id)
     );
     """)
-'''
-def create_simulation_subset_table(cursor):
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS simulation_subset (
-        subset_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        simulation_id TEXT,
-        subset_filename TEXT,
-        timepoints_filename TEXT,
-        FOREIGN KEY(simulation_id) REFERENCES simulations(simulation_id)
-    );
-    """)
-'''
+
 def create_database():
     # Create necessary folders
     create_folders()
@@ -86,7 +77,6 @@ def create_database():
     create_simulation_species_link_table(cursor)
     create_simulation_parameters_table(cursor)
     create_simulation_results_table(cursor)
-    #create_simulation_subset_table(cursor)
 
     # Commit changes and close connection
     conn.commit()

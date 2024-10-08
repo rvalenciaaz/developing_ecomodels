@@ -3,13 +3,15 @@ import pandas as pd
 import logging
 import sys
 import os
-from glv_functions import run_glv_simulation
+
+from lib import glv_functions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(message)s')
 
-# Define the directory to store simulation results
+# Define the directories to store simulation results and parameter files
 RESULTS_DIR = "simulation_results"
+PARAMS_DIR = "simulation_params"
 
 def simulate_metagenomic_data(simulation_id):
     # Ensure the results directory exists
@@ -20,26 +22,27 @@ def simulate_metagenomic_data(simulation_id):
     # Connect to SQLite database
     try:
         conn = sqlite3.connect('simulations.db')
-        cursor = conn.cursor()
 
-        # Validate that the simulation_id exists
-        cursor.execute("SELECT COUNT(1) FROM simulations WHERE simulation_id = ?", (simulation_id,))
-        if cursor.fetchone()[0] == 0:
+        # Use Pandas to validate that the simulation_id exists
+        df_simulations = pd.read_sql_query("SELECT * FROM simulations WHERE simulation_id = ?", conn, params=(simulation_id,))
+        if df_simulations.empty:
             logging.error(f"Simulation ID {simulation_id} does not exist.")
             return
 
-        # Retrieve parameter filenames for the given simulation_id
-        cursor.execute("""
+        # Retrieve parameter filenames for the given simulation_id using Pandas
+        query = """
             SELECT growth_rates_filename, interaction_matrix_filename, initial_abundances_filename 
             FROM simulation_parameters 
             WHERE simulation_id = ?
-        """, (simulation_id,))
-        result = cursor.fetchone()
-        if not result:
+        """
+        df_params = pd.read_sql_query(query, conn, params=(simulation_id,))
+        if df_params.empty:
             logging.error(f"No parameter files found for simulation ID {simulation_id}.")
             return
 
-        growth_rates_file, interaction_matrix_file, initial_abundances_file = result
+        growth_rates_file = os.path.join(PARAMS_DIR, df_params['growth_rates_filename'].values[0])
+        interaction_matrix_file = os.path.join(PARAMS_DIR, df_params['interaction_matrix_filename'].values[0])
+        initial_abundances_file = os.path.join(PARAMS_DIR, df_params['initial_abundances_filename'].values[0])
 
         # Check if the files exist
         if not os.path.exists(growth_rates_file):
@@ -54,14 +57,17 @@ def simulate_metagenomic_data(simulation_id):
 
         # Read the parameter files using pandas
         try:
-            growth_rates = pd.read_csv(growth_rates_file).values.flatten()
-            interaction_matrix = pd.read_csv(interaction_matrix_file).values
-            initial_abundances = pd.read_csv(initial_abundances_file).values.flatten()
-
+            growth_rates = pd.read_csv(growth_rates_file)
+            interaction_matrix = pd.read_csv(interaction_matrix_file)
+            initial_abundances = pd.read_csv(initial_abundances_file)
             logging.info(f"Successfully read parameter files for simulation ID {simulation_id}.")
         except Exception as e:
             logging.error(f"Error reading parameter files: {e}")
             return
+
+        growth_rates= growth_rates["Growth Rate"].values.flatten()
+        interaction_matrix= interaction_matrix.iloc[:,1:].values
+        initial_abundances= initial_abundances["Initial Abundance"].values.flatten()
 
         # Define simulation parameters
         n_steps = 500  # Number of time steps
@@ -73,7 +79,7 @@ def simulate_metagenomic_data(simulation_id):
 
         # Run the GLV simulation
         try:
-            simulation_results = run_glv_simulation(growth_rates, interaction_matrix, initial_abundances, n_steps, dt)
+            simulation_results = glv_functions.run_glv_simulation(growth_rates, interaction_matrix, initial_abundances, n_steps, dt)
         except Exception as e:
             logging.error(f"Error during GLV simulation: {e}")
             return
@@ -83,8 +89,13 @@ def simulate_metagenomic_data(simulation_id):
         df_results = pd.DataFrame(simulation_results)
         df_results.insert(0, 'Time', time_points)
 
+
+        # Save results metadata into the simulation_results table
+        method_label = "sundials"
+        plot_filename = None  # Placeholder if plot is generated in the future
+
         # Define the path for saving the simulation results
-        results_filename = os.path.join(RESULTS_DIR, f'simulated_metagenomic_data_{simulation_id}.csv')
+        results_filename = os.path.join(RESULTS_DIR, f'{simulation_id}_{method_label}_simulation.csv')
 
         # Save simulation results to CSV
         try:
@@ -94,15 +105,21 @@ def simulate_metagenomic_data(simulation_id):
             logging.error(f"Failed to save CSV: {e}")
             return
 
-        # Save results metadata into the simulation_results table
-        method_label = "sundials"
-        plot_filename = None  # Placeholder if plot is generated in the future
+        
 
         try:
-            cursor.execute("""
-            INSERT INTO simulation_results (simulation_id, method_label, results_filename, plot_filename, dt, n_steps)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """, (simulation_id, method_label, results_filename, plot_filename, dt, n_steps))
+            # Prepare the metadata as a DataFrame for insertion
+            df_metadata = pd.DataFrame({
+                'simulation_id': [simulation_id],
+                'method_label': [method_label],
+                'results_filename': [results_filename],
+                'plot_filename': [plot_filename],
+                'dt': [dt],
+                'n_steps': [n_steps]
+            })
+
+            # Append metadata to the simulation_results table using pandas
+            df_metadata.to_sql('simulation_results', conn, if_exists='append', index=False)
             logging.info(f"Inserted results metadata for simulation ID {simulation_id}.")
         except sqlite3.Error as e:
             logging.error(f"Error inserting simulation results metadata: {e}")
@@ -116,7 +133,6 @@ def simulate_metagenomic_data(simulation_id):
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
     finally:
-        cursor.close()
         conn.close()
 
 if __name__ == "__main__":

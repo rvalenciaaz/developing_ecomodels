@@ -5,6 +5,7 @@ import os
 def create_folders():
     os.makedirs('simulation_params', exist_ok=True)
     os.makedirs('simulation_results', exist_ok=True)
+    os.makedirs('simulation_plots', exist_ok=True)
 
 def create_bacterial_species_table(cursor):
     cursor.execute("""

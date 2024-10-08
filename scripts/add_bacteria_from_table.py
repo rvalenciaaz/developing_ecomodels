@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 import sys
+import os
 
 def add_bacteria(cursor, species_id, genus, species, strain, taxonomy, genome_filename):
     # Insert a new bacterial species into the table
@@ -18,15 +19,21 @@ if __name__ == "__main__":
     # Get the CSV filename from the command-line arguments
     csv_filename = sys.argv[1]
 
+    # Define the folder path where the CSV files are stored
+    folder_path = 'species_list_tables'
+    
+    # Create the full path to the CSV file
+    csv_file_path = os.path.join(folder_path, csv_filename)
+
     # Connect to SQLite database
     conn = sqlite3.connect('simulations.db')
     cursor = conn.cursor()
 
     # Read bacteria data from the CSV file using pandas
     try:
-        df = pd.read_csv(csv_filename)
+        df = pd.read_csv(csv_file_path)
     except FileNotFoundError:
-        print(f"Error: File '{csv_filename}' not found.")
+        print(f"Error: File '{csv_file_path}' not found.")
         sys.exit(1)
 
     # Ensure that the dataframe has the necessary columns including 'id'

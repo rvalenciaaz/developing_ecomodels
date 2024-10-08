@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(message)s')
 RESULTS_DIR = "simulation_results"
 PARAMS_DIR = "simulation_params"
 
-def simulate_metagenomic_data(simulation_id):
+def simulate_metagenomic_data(simulation_id, t_start, t_end, steps):
     # Ensure the results directory exists
     if not os.path.exists(RESULTS_DIR):
         os.makedirs(RESULTS_DIR)
@@ -65,37 +65,40 @@ def simulate_metagenomic_data(simulation_id):
             logging.error(f"Error reading parameter files: {e}")
             return
 
+        # Extract species IDs and initial abundances
+        species_ids = initial_abundances["Species"].values.flatten()  # Assuming 'Species ID' column exists
+        initial_abundances_values = initial_abundances["Initial Abundance"].values.flatten()
+
         growth_rates= growth_rates["Growth Rate"].values.flatten()
         interaction_matrix= interaction_matrix.iloc[:,1:].values
         initial_abundances= initial_abundances["Initial Abundance"].values.flatten()
 
-        # Define simulation parameters
-        n_steps = 500  # Number of time steps
-        dt = 0.1  # Time step for integration
+        # Calculate dt based on t_start, t_end, and steps
+        dt = (t_end - t_start) / (steps - 1)
 
         logging.info(f"Growth rates: {growth_rates}")
         logging.info(f"Interaction matrix: {interaction_matrix}")
-        logging.info(f"Initial abundances: {initial_abundances}")
+        logging.info(f"Initial abundances: {initial_abundances_values}")
+        logging.info(f"Time range: {t_start} to {t_end} with {steps} steps including t_start and t_end, dt = {dt}")
 
         # Run the GLV simulation
         try:
-            simulation_results = glv_functions.run_glv_simulation(growth_rates, interaction_matrix, initial_abundances, n_steps, dt)
+            simulation_results = glv_functions.run_glv_simulation(growth_rates, interaction_matrix, initial_abundances_values, steps, dt)
         except Exception as e:
             logging.error(f"Error during GLV simulation: {e}")
             return
 
-        # Create a DataFrame for simulation results
-        time_points = pd.Series([dt * step for step in range(n_steps)], name="Time")
-        df_results = pd.DataFrame(simulation_results)
+        # Create a DataFrame for simulation results with species IDs as columns
+        time_points = pd.Series([t_start + dt * step for step in range(steps)], name="Time")
+        df_results = pd.DataFrame(simulation_results, columns=species_ids)  # Use species IDs as columns
         df_results.insert(0, 'Time', time_points)
-
 
         # Save results metadata into the simulation_results table
         method_label = "sundials"
         plot_filename = None  # Placeholder if plot is generated in the future
 
         # Define the path for saving the simulation results
-        results_filename = os.path.join(RESULTS_DIR, f'{simulation_id}_{method_label}_simulation.csv')
+        results_filename = os.path.join(RESULTS_DIR, f'{simulation_id}_{method_label}_{int(t_start)}_{int(t_end)}_{steps}_simulation.csv')
 
         # Save simulation results to CSV
         try:
@@ -105,8 +108,6 @@ def simulate_metagenomic_data(simulation_id):
             logging.error(f"Failed to save CSV: {e}")
             return
 
-        
-
         try:
             # Prepare the metadata as a DataFrame for insertion
             df_metadata = pd.DataFrame({
@@ -114,8 +115,10 @@ def simulate_metagenomic_data(simulation_id):
                 'method_label': [method_label],
                 'results_filename': [results_filename],
                 'plot_filename': [plot_filename],
-                'dt': [dt],
-                'n_steps': [n_steps]
+                't_start': [t_start],
+                't_end': [t_end],
+                'steps': [steps],
+                'dt': [dt]
             })
 
             # Append metadata to the simulation_results table using pandas
@@ -136,12 +139,15 @@ def simulate_metagenomic_data(simulation_id):
         conn.close()
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python simulate_metagenomic_data.py <simulation_id>")
+    if len(sys.argv) != 5:
+        print("Usage: python simulate_metagenomic_data.py <simulation_id> <t_start> <t_end> <steps>")
         sys.exit(1)
 
-    # Get the simulation_id from the command-line argument
+    # Get the arguments from the command-line
     simulation_id = sys.argv[1]
+    t_start = float(sys.argv[2])
+    t_end = float(sys.argv[3])
+    steps = int(sys.argv[4])
 
     # Run the simulation
-    simulate_metagenomic_data(simulation_id)
+    simulate_metagenomic_data(simulation_id, t_start, t_end, steps)

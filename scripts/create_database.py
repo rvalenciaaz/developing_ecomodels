@@ -60,7 +60,9 @@ def create_simulation_results_table(cursor):
         results_filename TEXT,
         plot_filename TEXT,
         dt REAL,  -- Time step (dt)
-        n_steps INTEGER,  -- Number of steps (n_steps)
+        steps INTEGER,  -- Number of steps (n_steps)
+        t_start REAL,
+        t_end REAL,
         FOREIGN KEY(simulation_id) REFERENCES simulations(simulation_id)
     );
     """)

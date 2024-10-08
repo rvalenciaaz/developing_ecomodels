@@ -47,6 +47,7 @@ def run_glv_simulation(growth_rates, interaction_matrix, initial_abundances, n_s
         np.ndarray: Simulation results, a 2D array with shape (n_steps, num_species).
     """
     num_species = len(initial_abundances)  # Number of species
+    print(num_species)
 
     # Convert input arrays to ctypes for the C library
     growth_rates_c = (ctypes.c_double * num_species)(*growth_rates)

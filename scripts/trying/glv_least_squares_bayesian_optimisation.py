@@ -36,6 +36,8 @@ data = pd.read_csv(input_file_path)
 time_points = data['Time'].values
 species_data = data.iloc[:, 1:].values  # Species data (sp1 to sp9)
 
+#this looks ok
+
 # Define the generalized Lotka-Volterra model
 def glv_model(X, t, alpha, beta):
     N = len(X)

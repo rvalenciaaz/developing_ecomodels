@@ -17,7 +17,9 @@ This command adds bacterial species to the database using data from a CSV file (
 
 4. `python -m scripts.add_experiment osci4`
 
+It adds a new experiment (id: osci4) to the database. The script (add_experiment) sets up the structure for storing the experimental data in the database, including any parameters or configurations needed for the experiment. Here, the parameters should be saved as csv files in the simulation_params folder and the first string before a `_` in the filename should match the expected ID string.
 
-5. `python -m scripts.simulation_sundials osci4 0 500 500`
 
-6. `python -m scripts.plot_data osci4_sundials_0_500_500_simulation.csv`
+6. `python -m scripts.simulation_sundials osci4 0 500 500`
+
+7. `python -m scripts.plot_data osci4_sundials_0_500_500_simulation.csv`

@@ -1,5 +1,5 @@
 # developing_ecomodels
-Simulate time series data using gLV and consumer-resource models in Python/sundials (C)
+Simulate time series data using a generalised Lotka-Volterra (gLV) model or consumer-resource models in Python/sundials (C)
 
 Commands:
 

@@ -1,0 +1,11 @@
+ species_list = [
+        "Akkermansia muciniphila DSM 22959",
+        "Anaerostipes caccae DSM 14662",
+        "Bifidobacterium longum DSM 20219",
+        "Bacteroides thetaiotaomicron DSM 2079",
+        "Blautia producta DSM 2950",
+        "Clostridium butyricum DSM 10702",
+        "Thomasclavelia ramosa DSM 1402",
+        "Escherichia coli DSM 18039",
+        "Lactiplantibacillus plantarum DSM 20174",
+    ]

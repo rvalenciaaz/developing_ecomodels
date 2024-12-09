@@ -24,3 +24,6 @@ It adds a new experiment (id: osci4) to the database. The script (add_experiment
 This command runs a generalised Lotka Volterra (gLV) simulation (using the C/sundials solver) for the experiment osci4. The arguments (0 500 500) represent the start time, end time, and the number of steps for the simulation, which will generate data over the specified range.
 
 8. `python -m scripts.plot_data osci4_sundials_0_500_500_simulation.csv`
+
+
+Parameter estimation

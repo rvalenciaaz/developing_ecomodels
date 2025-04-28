@@ -27,3 +27,5 @@ This command runs a generalised Lotka Volterra (gLV) simulation (using the C/sun
 
 
 Parameter estimation
+
+To compile the library for use with ctypes

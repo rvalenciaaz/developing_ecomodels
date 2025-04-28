@@ -103,7 +103,7 @@ void solve_consumer_resource(double *results, int n_steps, double dt,
     // Dense linear solver, exactly as before
     SUNMatrix A = SUNDenseMatrix(num_species, num_species);
     SUNLinearSolver LS = SUNDenseLinearSolver(y, A);
-    CVDlsSetLinearSolver(cvode_mem, LS, A);
+    CVodeSetLinearSolver(cvode_mem, LS, A);
 
     // Integration loop
     t = t0;

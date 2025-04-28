@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(message)s')
 lib_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Construct the full path to libglv.so
-so_file = os.path.join(lib_dir, 'libglv.so')  # Change to 'glv.dll' on Windows
+so_file = os.path.join(lib_dir, 'libglv_new.so')  # Change to 'glv.dll' on Windows
 
 # Load the shared library using the absolute path
 lib = ctypes.CDLL(so_file)
